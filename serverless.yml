@@ -27,7 +27,7 @@ provider:
 
 functions:
   user-api:
-    handler: user.handler
+    handler: functions/user.handler
     events:
       - httpApi: "*"
 

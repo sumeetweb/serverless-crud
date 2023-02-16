@@ -17,7 +17,7 @@ module.exports.encode = (payload) => {
   if (!payload) {
     throw new Error('Payload is required');
   }
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' } );
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: '30d' });
 }
 
 module.exports.generateToken = (user) => {
@@ -41,10 +41,10 @@ module.exports.validate = (req, res, next) => {
       req.user = decodedToken;
       next();
     } else {
-      res.status(401).json({ error: 'Invalid token' });
+      return res.status(401).json({ error: 'Invalid token' });
     }
   } else {
-    res.status(401).json({ error: 'No token provided' });
+    return res.status(401).json({ error: 'No token provided' });
   }
 }
 
@@ -57,10 +57,10 @@ module.exports.validateAdmin = (req, res, next) => {
       if (decodedToken.userGroup.includes('admin')) {
         next();
       } else {
-        res.status(403).json({ error: 'Unauthorized' });
+        return res.status(403).json({ error: 'Unauthorized' });
       }
     } else {
-      res.status(401).json({ error: 'Invalid token' });
+      return res.status(401).json({ error: 'Invalid token' });
     }
   }
 }
