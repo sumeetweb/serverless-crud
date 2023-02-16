@@ -4,7 +4,6 @@ frameworkVersion: "3"
 custom:
   UserTableName: "users-table-${sls:stage}"
 
-
 provider:
   name: aws
   stage: "dev"
@@ -24,14 +23,13 @@ provider:
             - Fn::GetAtt: [UsersTable, Arn]
   environment:
     USERS_TABLE: ${self:custom.UserTableName}
-    JWT_SECRET: ${env:JWT_SECRET}
+    JWT_SECRET: ${env:JWT_SECRET, 'someRandomSecret'}
 
 functions:
   user-api:
     handler: user.handler
     events:
       - httpApi: "*"
-        cors: true
 
 resources:
   Resources:
