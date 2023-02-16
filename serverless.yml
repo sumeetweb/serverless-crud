@@ -1,5 +1,6 @@
 service: serverless-crud
 frameworkVersion: "3"
+configValidationMode: error
 
 custom:
   UserTableName: "users-table-${sls:stage}"
@@ -14,14 +15,13 @@ provider:
       statements:
         - Effect: Allow
           Action:
-            - dynamodb:Query
-            - dynamodb:Scan
-            - dynamodb:GetItem
-            - dynamodb:PutItem
-            - dynamodb:UpdateItem
-            - dynamodb:DeleteItem
+            - dynamodb:*
           Resource:
             - Fn::GetAtt: [UsersTable, Arn]
+        - Effect: Allow
+          Action: sns:*
+          Resource:
+            - arn:aws:sns:us-east-1:${aws:accountId}:*
   environment:
     USERS_TABLE: ${self:custom.UserTableName}
     JWT_SECRET: ${env:JWT_SECRET, 'someRandomSecret'}
@@ -38,25 +38,12 @@ functions:
       - httpApi: "*"
   subs-cmn-alert:
     handler: cron/subAlert.commonHandler
-    iam:
-      role:
-        statements:
-          - Effect: Alllow
-            Action: sns:*
+  subs-emergency-alert:
+    handler: cron/subAlert.emergencyHandler
   send-cmn-alert:
     handler: cron/subAlert.sendCommonAlert
-    iam:
-      role:
-        statements:
-          - Effect: Alllow
-            Action: sns:*
   send-emergency-alert:
     handler: cron/subAlert.sendEmergencyAlert
-    iam:
-      role:
-        statements:
-          - Effect: Alllow
-            Action: sns:*
 
 resources:
   Resources:

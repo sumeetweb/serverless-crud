@@ -12,8 +12,8 @@ exports.commonHandler = async (event) => {
   console.log('event', event);
   const { Records } = event;
   const promises = Records.map(async (record) => {
-    const { eventName, dynamodb: { NewImage } } = record;
-    if (eventName === 'INSERT') {
+    const { eventName, dynamodb: { NewImage }, eventSourceARN } = record;
+    if (eventName === 'INSERT' && eventSourceARN.includes('users')) {
       const { mobile: { S: mobile } } = NewImage;
       console.log('Adding mobile ', mobile);
       const params = {
@@ -40,8 +40,8 @@ exports.emergencyHandler = async (event) => {
   console.log('event', event);
   const { Records } = event;
   const promises = Records.map(async (record) => {
-    const { eventName, dynamodb: { NewImage } } = record;
-    if (eventName === 'INSERT') {
+    const { eventName, dynamodb: { NewImage }, eventSourceARN} = record;
+    if (eventName === 'INSERT' && eventSourceARN.includes('users')) {
       const { mobile: { S: mobile } } = NewImage;
       console.log('Adding mobile ', mobile);
       const params = {
@@ -69,8 +69,8 @@ exports.sendCommonAlert = async (event) => {
   console.log('event', event);
   const { Records } = event;
   const promises = Records.map(async (record) => {
-    const { eventName, dynamodb: { NewImage } } = record;
-    if (eventName === 'INSERT') {
+    const { eventName, dynamodb: { NewImage }, eventSourceARN} = record;
+    if (eventName === 'INSERT' && eventSourceARN.includes('alerts') && NewImage.type.S === 'common') {
       const { title: { S: title }, description: { S: description } } = NewImage;
       console.log('Sending common alert ', title, description);
 
@@ -97,8 +97,8 @@ exports.sendEmergencyAlert = async (event) => {
   console.log('event', event);
   const { Records } = event;
   const promises = Records.map(async (record) => {
-    const { eventName, dynamodb: { NewImage } } = record;
-    if (eventName === 'INSERT') {
+    const { eventName, dynamodb: { NewImage }, eventSourceARN } = record;
+    if (eventName === 'INSERT' && eventSourceARN.includes('alerts') && NewImage.type.S === 'emergency') {
       const { title: { S: title }, description: { S: description } } = NewImage;
       console.log('Sending emergency alert ', title, description);
 
