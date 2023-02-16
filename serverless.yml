@@ -1,0 +1,64 @@
+service: serverless-crud
+frameworkVersion: "3"
+
+custom:
+  UserTableName: "users-table-${sls:stage}"
+  AdminTableName: "admins-table-${sls:stage}"
+
+
+provider:
+  name: aws
+  stage: "dev"
+  runtime: nodejs18.x
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [UsersTable, Arn]
+            - Fn::GetAtt: [AdminsTable, Arn]
+  environment:
+    USERS_TABLE: ${self:custom.UserTableName}
+    ADMINS_TABLE: ${self:custom.AdminTableName}
+    JWT_SECRET: ${env:JWT_SECRET}
+
+functions:
+  user-api:
+    handler: user.handler
+    events:
+      - httpApi: "*"
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.UserTableName}
+    AdminsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.AdminTableName}
+
+plugins:
+  - serverless-offline
