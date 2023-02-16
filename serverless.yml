@@ -5,6 +5,7 @@ configValidationMode: error
 custom:
   UserTableName: "users-table-${sls:stage}"
   AlertTableName: "alerts-table-${sls:stage}"
+  AppointmentTableName: "appointment-table-${sls:stage}"
 
 provider:
   name: aws
@@ -28,6 +29,8 @@ provider:
             - arn:aws:lambda:us-east-1:${aws:accountId}:*
   environment:
     USERS_TABLE: ${self:custom.UserTableName}
+    ALERTS_TABLE: ${self:custom.AlertTableName}
+    APPOINTMENT_TABLE: ${self:custom.AppointmentTableName}
     JWT_SECRET: ${env:JWT_SECRET, 'someRandomSecret'}
     AWS_ACCOUNT_ID: ${aws:accountId}
 
@@ -35,11 +38,33 @@ functions:
   user-api:
     handler: functions/user.handler
     events:
-      - httpApi: "*"
+      - httpApi:
+          path: /users/signup
+          method: "GET"
+      - httpApi:
+          path: /users/login
+          method: "*"
+      - httpApi:
+          path: /admin/add
+          method: "*"
+      - httpApi:
+          path: /admin/login
+          method: "*"
+      - httpApi:
+          path: /users
+          method: "*"
+      - httpApi:
+          path: /users/{userId}
+          method: "*"
   alert-api:
     handler: functions/alert.handler
     events:
-      - httpApi: "*"
+      - httpApi:
+          path: /alerts
+          method: "*"
+      - httpApi:
+          path: /alerts/{id}
+          method: "*"
   subs-cmn-alert:
     handler: cron/subAlert.commonHandler
     events:
@@ -101,6 +126,17 @@ resources:
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:custom.AlertTableName}
+    AppointmentsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: appId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: appId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.AppointmentTableName}    
 
 plugins:
   - serverless-offline

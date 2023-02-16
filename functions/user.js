@@ -22,6 +22,13 @@ const dynamoDbClient = DynamoDBDocumentClient.from(client);
 app.use(express.json());
 app.use(cors());
 
+app.options("/*", function(req, res, next){
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+  res.send(200);
+});
+
 app.post("/users/signup", async function (req, res) {
   const { userId, name, password, mobile, userGroup, userType } = req.body;
 
