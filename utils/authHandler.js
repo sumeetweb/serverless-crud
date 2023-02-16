@@ -34,33 +34,41 @@ module.exports.generateToken = (user) => {
 }
 
 module.exports.validate = (req, res, next) => {
-  const token = req.headers.authorization;
-  if (token) {
-    const decodedToken = module.exports.decode(token);
-    if (decodedToken) {
-      req.user = decodedToken;
-      next();
+  try {
+    const token = req.headers.authorization;
+    if (token) {
+      const decodedToken = module.exports.decode(token);
+      if (decodedToken) {
+        req.user = decodedToken;
+        next();
+      } else {
+        return res.status(401).json({ error: 'Invalid token' });
+      }
     } else {
-      return res.status(401).json({ error: 'Invalid token' });
+      return res.status(401).json({ error: 'No token provided' });
     }
-  } else {
-    return res.status(401).json({ error: 'No token provided' });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
   }
 }
 
 module.exports.validateAdmin = (req, res, next) => {
-  const token = req.headers.authorization;
-  if (token) {
-    const decodedToken = module.exports.decode(token);
-    if (decodedToken) {
-      req.user = decodedToken;
-      if (decodedToken.userGroup.includes('admin')) {
-        next();
+  try {
+    const token = req.headers.authorization;
+    if (token) {
+      const decodedToken = module.exports.decode(token);
+      if (decodedToken) {
+        req.user = decodedToken;
+        if (decodedToken.userGroup.includes('admin')) {
+          next();
+        } else {
+          return res.status(403).json({ error: 'Unauthorized' });
+        }
       } else {
-        return res.status(403).json({ error: 'Unauthorized' });
+        return res.status(401).json({ error: 'Invalid token' });
       }
-    } else {
-      return res.status(401).json({ error: 'Invalid token' });
     }
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
   }
 }

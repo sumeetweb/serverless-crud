@@ -87,8 +87,7 @@ app.post("/users/login", async function (req, res) {
   if (typeof password !== "string") {
     return res.status(400).json({ error: '"password" must be a string' });
   } else if (password.length < 6) {
-    return res.status(400);
-    return res.json({ error: '"password" length must be 6 characters long' });
+    return res.status(400).json({ error: '"password" length must be 6 characters long' });
   }
 
   const params = {

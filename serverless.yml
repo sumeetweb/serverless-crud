@@ -3,6 +3,7 @@ frameworkVersion: "3"
 
 custom:
   UserTableName: "users-table-${sls:stage}"
+  AlertTableName: "alerts-table-${sls:stage}"
 
 provider:
   name: aws
@@ -24,12 +25,38 @@ provider:
   environment:
     USERS_TABLE: ${self:custom.UserTableName}
     JWT_SECRET: ${env:JWT_SECRET, 'someRandomSecret'}
+    AWS_ACCOUNT_ID: ${aws:accountId}
 
 functions:
   user-api:
     handler: functions/user.handler
     events:
       - httpApi: "*"
+  alert-api:
+    handler: functions/alert.handler
+    events:
+      - httpApi: "*"
+  subs-cmn-alert:
+    handler: cron/subAlert.commonHandler
+    iam:
+      role:
+        statements:
+          - Effect: Alllow
+            Action: sns:*
+  send-cmn-alert:
+    handler: cron/subAlert.sendCommonAlert
+    iam:
+      role:
+        statements:
+          - Effect: Alllow
+            Action: sns:*
+  send-emergency-alert:
+    handler: cron/subAlert.sendEmergencyAlert
+    iam:
+      role:
+        statements:
+          - Effect: Alllow
+            Action: sns:*
 
 resources:
   Resources:
@@ -44,6 +71,17 @@ resources:
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:custom.UserTableName}
+    AlertsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: alertId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: alertId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.AlertTableName}
 
 plugins:
   - serverless-offline
