@@ -6,6 +6,7 @@
     "@aws-sdk/client-dynamodb": "3.272.0",
     "@aws-sdk/client-sns": "3.272.0",
     "@aws-sdk/lib-dynamodb": "3.272.0",
+    "aws-sdk": "^2.1317.0",
     "bcrypt": "^5.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",

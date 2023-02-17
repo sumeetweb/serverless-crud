@@ -6,6 +6,8 @@ custom:
   UserTableName: "users-table-${sls:stage}"
   AlertTableName: "alerts-table-${sls:stage}"
   AppointmentTableName: "appointment-table-${sls:stage}"
+  UploadBucketName: "hacknation-sit-bucket-${sls:stage}"
+  CleanTableName: "clean-table-sit-${sls:stage}"
 
 provider:
   name: aws
@@ -27,44 +29,23 @@ provider:
           Action: lambda:InvokeFunction
           Resource:
             - arn:aws:lambda:us-east-1:${aws:accountId}:*
+        - Effect: Allow
+          Action: s3:*
+          Resource: "*"
   environment:
     USERS_TABLE: ${self:custom.UserTableName}
     ALERTS_TABLE: ${self:custom.AlertTableName}
     APPOINTMENT_TABLE: ${self:custom.AppointmentTableName}
+    CLEAN_TABLE: ${self:custom.CleanTableName}
     JWT_SECRET: ${env:JWT_SECRET, 'someRandomSecret'}
     AWS_ACCOUNT_ID: ${aws:accountId}
+    S3_BUCKET: ${self:custom.UploadBucketName}
 
 functions:
   user-api:
-    handler: functions/user.handler
+    handler: functions/merged.handler
     events:
-      - httpApi:
-          path: /users/signup
-          method: "GET"
-      - httpApi:
-          path: /users/login
-          method: "*"
-      - httpApi:
-          path: /admin/add
-          method: "*"
-      - httpApi:
-          path: /admin/login
-          method: "*"
-      - httpApi:
-          path: /users
-          method: "*"
-      - httpApi:
-          path: /users/{userId}
-          method: "*"
-  alert-api:
-    handler: functions/alert.handler
-    events:
-      - httpApi:
-          path: /alerts
-          method: "*"
-      - httpApi:
-          path: /alerts/{id}
-          method: "*"
+      - httpApi: "*"
   subs-cmn-alert:
     handler: cron/subAlert.commonHandler
     events:
@@ -136,7 +117,23 @@ resources:
           - AttributeName: appId
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
-        TableName: ${self:custom.AppointmentTableName}    
+        TableName: ${self:custom.AppointmentTableName}
+    CleanTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: cleanId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: cleanId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.CleanTableName}    
+    UploadBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.UploadBucketName}
+        AccessControl: PublicRead
 
 plugins:
   - serverless-offline

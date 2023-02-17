@@ -1,12 +1,10 @@
 // CRON JOB to add user's mobile number which it will get from dynamodb sync event to common alerts subscription topic of aws sns
 
-const AWS = require('@aws-sdk/client-sns');
-const { v4: uuidv4 } = require('uuid');
-
-const sns = new AWS.SNSClient({ region: 'us-east-1' });
-
+const AWS = require('aws-sdk');
+const sns = new AWS.SNS();
 const CommonSNSTopicArn = `arn:aws:sns:us-east-1:${process.env.AWS_ACCOUNT_ID}:CommonAlerts`;
 const EmergencySNSTopicArn = `arn:aws:sns:us-east-1:${process.env.AWS_ACCOUNT_ID}:EmergencyAlerts`;
+const { v4: uuidv4 } = require('uuid');
 
 exports.commonHandler = async (event) => {
   console.log('event', event);
@@ -40,7 +38,7 @@ exports.emergencyHandler = async (event) => {
   console.log('event', event);
   const { Records } = event;
   const promises = Records.map(async (record) => {
-    const { eventName, dynamodb: { NewImage }, eventSourceARN} = record;
+    const { eventName, dynamodb: { NewImage }, eventSourceARN } = record;
     if (eventName === 'INSERT' && eventSourceARN.includes('users')) {
       const { mobile: { S: mobile } } = NewImage;
       console.log('Adding mobile ', mobile);
@@ -65,57 +63,46 @@ exports.emergencyHandler = async (event) => {
 }
 
 exports.sendCommonAlert = async (event) => {
-  // Use dynamodb event to send common alerts to all users
   console.log('event', event);
   const { Records } = event;
-  const promises = Records.map(async (record) => {
-    const { eventName, dynamodb: { NewImage }, eventSourceARN} = record;
-    if (eventName === 'INSERT' && eventSourceARN.includes('alerts') && NewImage.type.S === 'common') {
-      const { title: { S: title }, description: { S: description } } = NewImage;
-      console.log('Sending common alert ', title, description);
-
-      const params = {
-        Message: `${title} - ${description}`,
-        TopicArn: CommonSNSTopicArn,
-        MessageAttributes: {
-          'AWS.SNS.SMS.SMSType': {
-            DataType: 'String',
-            StringValue: 'Transactional'
-          }
+  if (Records[0].eventName === 'INSERT' && Records[0].eventSourceARN.includes('alerts') && Records[0].dynamodb.NewImage.type.S === 'common') {
+    const sns = new AWS.SNS();
+    const message = Records[0].dynamodb.NewImage.title.S + ' ' + Records[0].dynamodb.NewImage.description.S;
+    const params = {
+      Message: message,
+      MessageAttributes: {
+        'AWS.SNS.SMS.SMSType': {
+          DataType: 'String',
+          StringValue: 'Transactional'
         }
-      };
-      await sns.publish(params);
-      return 'success';
-    }
-  });
-  await Promise.all(promises);
-  console.log(`Successfully sent ${Records.length} common alerts`);
+      },
+      TopicArn: CommonSNSTopicArn
+    };
+
+    const response = await sns.publish(params).promise();
+    return response;
+  }
 }
 
 exports.sendEmergencyAlert = async (event) => {
-  // Use dynamodb event to send emergency alerts to all users
   console.log('event', event);
   const { Records } = event;
-  const promises = Records.map(async (record) => {
-    const { eventName, dynamodb: { NewImage }, eventSourceARN } = record;
-    if (eventName === 'INSERT' && eventSourceARN.includes('alerts') && NewImage.type.S === 'emergency') {
-      const { title: { S: title }, description: { S: description } } = NewImage;
-      console.log('Sending emergency alert ', title, description);
 
-      const params = {
-        Message: `${title} - ${description}`,
-        TopicArn: EmergencySNSTopicArn,
-        MessageAttributes: {
-          'AWS.SNS.SMS.SMSType': {
-            DataType: 'String',
-            StringValue: 'Transactional'
-          }
+  if (Records[0].eventName === 'INSERT' && Records[0].eventSourceARN.includes('alerts') && Records[0].dynamodb.NewImage.type.S === 'emergency') {
+    const sns = new AWS.SNS();
+    const message = Records[0].dynamodb.NewImage.title.S + ' ' + Records[0].dynamodb.NewImage.description.S;
+    const params = {
+      Message: message,
+      MessageAttributes: {
+        'AWS.SNS.SMS.SMSType': {
+          DataType: 'String',
+          StringValue: 'Transactional'
         }
-      };
-      await sns.publish(params);
-      return 'success';
-    }
-  });
-  await Promise.all(promises);
-  console.log(`Successfully sent ${Records.length} emergency alerts`);
+      },
+      TopicArn: EmergencySNSTopicArn
+    };
+
+    const response = await sns.publish(params).promise();
+    return response;
+  }
 }
