@@ -11,7 +11,7 @@ const { v4: uuidv4 } = require("uuid");
 // Imports
 const bcrypt = require("bcrypt");
 const authHandler = require("../utils/authHandler");
-
+const AWS = require("aws-sdk");
 const multer = require("multer");
 const multerS3 = require("multer-s3");
 const s3 = new AWS.S3({
