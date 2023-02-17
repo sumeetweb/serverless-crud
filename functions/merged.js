@@ -626,6 +626,21 @@ app.post('/cleanlist/:id', async (req, res) => {
   }
 });
 
+app.get('/cleanlist/:id', async (req, res) => {
+  const params = {
+    TableName: CLEAN_TABLE,
+    Key: {
+      cleanId: req.params.id,
+    },
+  };
+
+  try {
+    const data = await dynamoDbClient.send(new GetCommand(params));
+    return res.json(data.Item);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
 
 
 app.use((req, res, next) => {
