@@ -21,7 +21,8 @@ const dynamoDbClient = DynamoDBDocumentClient.from(client);
 app.use(express.json());
 app.use(cors());
 
-app.get("/alerts", authHandler.validate, async (req, res) => {
+// ------------------ Alerts ------------------ //
+app.get("/alerts", authHandler.validate(req, res, next), async (req, res) => {
   const params = {
     TableName: ALERTS_TABLE,
   };
@@ -34,11 +35,11 @@ app.get("/alerts", authHandler.validate, async (req, res) => {
   }
 });
 
-app.get("/alerts/:id", authHandler.validate, async (req, res) => {
+app.get("/alerts/:id", authHandler.validate(req, res, next), async (req, res) => {
   const params = {
     TableName: ALERTS_TABLE,
     Key: {
-      id: req.params.id,
+      alertId: req.params.id,
     },
   };
 
@@ -50,12 +51,12 @@ app.get("/alerts/:id", authHandler.validate, async (req, res) => {
   }
 });
 
-app.post("/alerts", authHandler.validate, async (req, res) => {
+app.post("/alerts", authHandler.validate(req, res, next), async (req, res) => {
   const { title, description, type } = req.body;
   const params = {
     TableName: ALERTS_TABLE,
     Item: {
-      id: uuidv4(),
+      alertId: uuidv4(),
       title,
       description,
       type,
@@ -66,22 +67,22 @@ app.post("/alerts", authHandler.validate, async (req, res) => {
 
   try {
     await dynamoDbClient.send(new PutCommand(params));
-    return res.json(params.Item.append({ message: "Alert Sent Successfully" }));
+    return res.json(params.Item);
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
 });
 
-app.post("/alerts/:id", authHandler.validateAdmin, async (req, res) => {
+app.post("/alerts/:id", authHandler.validateAdmin(req, res, next), async (req, res) => {
   const { status } = req.body;
 
-  if(!["PENDING", "APPROVED", "REJECTED"].includes(status)) 
+  if(!["PENDING", "APPROVED", "REJECTED"].includes(status))
     return res.status(400).json({ error: "Invalid Status" });
 
   const params = {
     TableName: ALERTS_TABLE,
     Key: {
-      id: req.params.id,
+      alertId: req.params.id,
     },
     UpdateExpression: "set #status = :status",
     ExpressionAttributeNames: {
