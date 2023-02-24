@@ -43,45 +43,72 @@ provider:
 
 functions:
   user-api:
-    handler: functions/merged.handler
+    handler: functions/user.handler
     events:
-      - httpApi: "*"
-  subs-cmn-alert:
-    handler: cron/subAlert.commonHandler
+      - httpApi:
+          path: /users/signup
+          method: "*"
+      - httpApi:
+          path: /users/login
+          method: "*"
+      - httpApi:
+          path: /admin/add
+          method: "*"
+      - httpApi:
+          path: /admin/login
+          method: "*"
+      - httpApi:
+          path: /users
+          method: "*"
+      - httpApi:
+          path: /users/{userId}
+          method: "*"
+  alert-api:
+    handler: functions/alert.handler
     events:
-      - stream:
-          arn: arn:aws:dynamodb:us-east-1:${aws:accountId}:table/users-table-dev/stream/2023-02-16T20:15:30.234
-          startingPosition: LATEST
-          batchSize: 1
-          filterPatterns:
-            - eventName: [INSERT]
-  subs-emergency-alert:
-    handler: cron/subAlert.emergencyHandler
-    events:
-      - stream:
-          arn: arn:aws:dynamodb:us-east-1:${aws:accountId}:table/users-table-dev/stream/2023-02-16T20:15:30.234
-          startingPosition: LATEST
-          batchSize: 1
-          filterPatterns:
-            - eventName: [INSERT]
-  send-cmn-alert:
-    handler: cron/subAlert.sendCommonAlert
-    events:
-      - stream:
-          arn: arn:aws:dynamodb:us-east-1:${aws:accountId}:table/alerts-table-dev/stream/2023-02-16T21:10:06.066
-          startingPosition: LATEST
-          batchSize: 1
-          filterPatterns:
-            - eventName: [INSERT]
-  send-emergency-alert:
-    handler: cron/subAlert.sendEmergencyAlert
-    events:
-      - stream:
-          arn: arn:aws:dynamodb:us-east-1:${aws:accountId}:table/alerts-table-dev/stream/2023-02-16T21:10:06.066
-          startingPosition: LATEST
-          batchSize: 1
-          filterPatterns:
-            - eventName: [INSERT]
+      - httpApi:
+          path: /alerts
+          method: "*"
+      - httpApi:
+          path: /alerts/{id}
+          method: "*"
+  
+  # subs-cmn-alert:
+  #   handler: cron/subAlert.commonHandler
+  #   events:
+  #     - stream:
+  #         arn: arn:aws:dynamodb:us-east-1:${aws:accountId}:table/users-table-dev/stream/2023-02-16T20:15:30.234
+  #         startingPosition: LATEST
+  #         batchSize: 1
+  #         filterPatterns:
+  #           - eventName: [INSERT]
+  # subs-emergency-alert:
+  #   handler: cron/subAlert.emergencyHandler
+  #   events:
+  #     - stream:
+  #         arn: arn:aws:dynamodb:us-east-1:${aws:accountId}:table/users-table-dev/stream/2023-02-16T20:15:30.234
+  #         startingPosition: LATEST
+  #         batchSize: 1
+  #         filterPatterns:
+  #           - eventName: [INSERT]
+  # send-cmn-alert:
+  #   handler: cron/subAlert.sendCommonAlert
+  #   events:
+  #     - stream:
+  #         arn: arn:aws:dynamodb:us-east-1:${aws:accountId}:table/alerts-table-dev/stream/2023-02-16T21:10:06.066
+  #         startingPosition: LATEST
+  #         batchSize: 1
+  #         filterPatterns:
+  #           - eventName: [INSERT]
+  # send-emergency-alert:
+  #   handler: cron/subAlert.sendEmergencyAlert
+  #   events:
+  #     - stream:
+  #         arn: arn:aws:dynamodb:us-east-1:${aws:accountId}:table/alerts-table-dev/stream/2023-02-16T21:10:06.066
+  #         startingPosition: LATEST
+  #         batchSize: 1
+  #         filterPatterns:
+  #           - eventName: [INSERT]
 
 resources:
   Resources:
