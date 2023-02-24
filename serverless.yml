@@ -13,6 +13,10 @@ provider:
   name: aws
   stage: "dev"
   runtime: nodejs18.x
+  # Fix for corrupt image files in S3 Bucket
+  apiGateway:
+    binaryMediaTypes:
+      - '*/*'
   iam:
     role:
       statements:
@@ -72,7 +76,18 @@ functions:
       - httpApi:
           path: /alerts/{id}
           method: "*"
-  
+  file-api:
+    handler: functions/file.handler
+    events:
+      - httpApi:
+          path: /files
+          method: "*"
+      - httpApi:
+          path: /files/{id}
+          method: "*"
+      - httpApi:
+          path: /files/upload/{id}
+          method: "*"
   # subs-cmn-alert:
   #   handler: cron/subAlert.commonHandler
   #   events:
