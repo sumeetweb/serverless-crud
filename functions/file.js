@@ -40,7 +40,7 @@ app.get("/files/upload/:id", async (req, res, next) => {
   console.log("File ID: ", req.params.id);
   console.log("Bucket: ", uploadBucket);
 
-  const params = {
+  const paramsv2 = {
     Bucket: uploadBucket,
     Key: req.params.id,
     ContentType: "image/jpeg",
@@ -48,34 +48,39 @@ app.get("/files/upload/:id", async (req, res, next) => {
   };
 
   // AWS SDK v2
-  try {
-    // Create the presigned URL.
-    const s3v2 = new AWSv2.S3();
-    const signedUrl = s3v2.getSignedUrl("putObject", params);
-    console.log(signedUrl);
-    return res.status(200).json({ PostUrl: signedUrl });
-  } catch (err) {
-    console.log("Error: ", err);
-    return res.status(500).json({ error: err.message });
-  }
-
-  // AWS SDK v3
   // try {
-  //   // Create the command.
-  //   let cmd = new PutObjectCommand(params);
   //   // Create the presigned URL.
-  //   const signedUrl = await getSignedUrl(s3, cmd, {
-  //     expiresIn: 300,
-  //   });
-  //   console.log(
-  //     `\nGetting "${params.Key}" using signedUrl in v3`
-  //   );
+  //   const s3v2 = new AWSv2.S3();
+  //   const signedUrl = s3v2.getSignedUrl("putObject", paramsv2);
   //   console.log(signedUrl);
   //   return res.status(200).json({ PostUrl: signedUrl });
   // } catch (err) {
   //   console.log("Error: ", err);
   //   return res.status(500).json({ error: err.message });
   // }
+
+  let paramsv3 = {
+    Bucket: uploadBucket,
+    Key: req.params.id,
+    ContentType: "image/jpeg",
+  };
+  // AWS SDK v3
+  try {
+    // Create the command.
+    let cmd = new PutObjectCommand(paramsv3);
+    // Create the presigned URL.
+    const signedUrl = await getSignedUrl(s3, cmd, {
+      expiresIn: 300,
+    });
+    console.log(
+      `\nGetting "${paramsv3.Key}" using signedUrl in v3`
+    );
+    console.log(signedUrl);
+    return res.status(200).json({ PostUrl: signedUrl });
+  } catch (err) {
+    console.log("Error: ", err);
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 app.get("/files/:id", async (req, res, next) => {
